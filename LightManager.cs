@@ -10,18 +10,18 @@ namespace Dynamic_Lights
 {
     internal class LightManager : MonoBehaviour
     {
+        // Yes, I'm aware this code is a mess. Don't judge me, it works.
 
-        public bool sennaSpots;
+        public bool sennaShadows;
         public bool shadowsOn;
         private List<GameObject> dayLights = new List<GameObject>();
         private Light[] lights;
         private List<Light> shadowLights = new List<Light>();
-        private List<Light> sennaSpotlights = new List<Light>();
+        private List<Light> sennaLights = new List<Light>();
 
-        public float vertexLightDistance = 40f;
+        public float vertexLightDistance = 44f;
 
         private List<IslandStreetlightFire> streetlights = new List<IslandStreetlightFire>();
-
         private int i;
 
         private void Start()
@@ -34,18 +34,24 @@ namespace Dynamic_Lights
             {
                 if (light.transform.parent.GetComponent<ShipItemLight>()) continue; // skip if we're a carryable lantern
                 string lightName = light.transform.parent.name;
-                if (!light.name.Contains("halo") && light.transform.position.y < 20)
+
+                if (!light.name.Contains("halo") && light.transform.position.y < 20) // add to shadow list if we're not a halo or up on a hill
                 {
-                    shadowLights.Add(light);
-                    light.shadowStrength = 0.7f;
+                    light.shadowStrength = 0.75f;
                     if (light.name.Contains("senna"))
                     {
                         light.shadowNearPlane = 0f;
+                        light.shadowResolution = LightShadowResolution.Low;
+                        if (GetComponent<IslandSceneryScene>().parentIslandIndex == 28) // if we're in sen'na, put in different list and skip the component stage
+                        {
+                            sennaLights.Add(light);
+                            continue; 
+                        }
+
                     }
                     else if (light.name.Contains("street") || light.name.Contains("Particle") || light.name.Contains("Cube"))
                     {
                         light.shadowNearPlane = 0.6f;
-                        //light.shadowResolution = LightShadowResolution.Low;
 
                     }
                     else if (light.transform.parent.name.Contains("candle"))
@@ -53,15 +59,16 @@ namespace Dynamic_Lights
                         light.shadowNearPlane = 0.05f;
                     }
 
+                    shadowLights.Add(light);
                 }
 
 
                 if (Vector3.Distance(light.transform.position, portDude.position) < 5) continue; // skip if we're near port dude
                     
                 if (lightName.Contains("stove") || lightName.Contains("candle")) dayLights.Add(light.gameObject); // stoves and candles are assumed to be shops.
-                else if (!light.gameObject.GetComponent<IslandStreetlight>() && !light.gameObject.GetComponent<IslandStreetlightFire>())
+                else if (!light.gameObject.GetComponent<IslandStreetlight>() && !light.gameObject.GetComponent<IslandStreetlightFire>()) // FFL stuff already has this component
                 {
-                    if (light.name.Contains("street")) // emerald/firefish street lamps
+                    if (light.name.Contains("street")) // emerald/aestrin street lamps 
                     {
                         IslandStreetlight streetlight = light.gameObject.AddComponent<IslandStreetlight>();
 
@@ -85,7 +92,7 @@ namespace Dynamic_Lights
 
                     else if (light.name.Contains("Cube") || light.name.Contains("Particle")) // al'ankh lanterns & braziers
                     {
-                        IslandStreetlightFire streetlight = light.gameObject.AddComponent<IslandStreetlightFire>(); // custom class handles lights without paper mat
+                        IslandStreetlightFire streetlight = light.gameObject.AddComponent<IslandStreetlightFire>(); // new class handles light with sound/particles
                         this.AddStreetlight(streetlight);
                         streetlight.lightManager = this;
                         streetlight.halo = light.transform.parent.GetComponentInChildren<LightHalo>();
@@ -114,6 +121,24 @@ namespace Dynamic_Lights
                     }
                 }
                 shadowsOn = Plugin.globalShadows.Value;
+            }
+
+            // set sen'na specific shadows
+            if (GameState.justStarted || shadowsOn != Plugin.sennaShadows.Value)
+            {
+                foreach (Light light in sennaLights)
+                {
+                    if (Plugin.sennaShadows.Value)
+                    {
+
+                        light.shadows = LightShadows.Soft;
+                    }
+                    else
+                    {
+                        light.shadows = LightShadows.None;
+                    }
+                }
+                sennaShadows = Plugin.sennaShadows.Value;
             }
 
             LightDistanceCheckLoop();
@@ -160,8 +185,7 @@ namespace Dynamic_Lights
                 {
                     i = 0;
                 }
-                float dist = Vector3.Distance(streetlights[i].transform.position, Camera.main.transform.position);
-                if (dist > vertexLightDistance)
+                if (Vector3.Distance(streetlights[i].transform.position, Camera.main.transform.position) > vertexLightDistance)
                 {
                     streetlights[i].GetLight().renderMode = LightRenderMode.ForceVertex;
                 }
@@ -169,18 +193,6 @@ namespace Dynamic_Lights
                 {
                     streetlights[i].GetLight().renderMode = LightRenderMode.ForcePixel;
                 }
-                if (Plugin.globalShadows.Value) 
-                {
-                    if (dist > 0.5 * vertexLightDistance)
-                    {
-                        streetlights[i].GetLight().shadows = LightShadows.None;
-                    }
-                    else
-                    {
-                        streetlights[i].GetLight().shadows = LightShadows.Soft;
-                    }
-                }
-
 
                 i++;
             }

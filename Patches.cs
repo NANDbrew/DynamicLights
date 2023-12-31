@@ -31,35 +31,35 @@ namespace Dynamic_Lights
             }
         }
 
-        [HarmonyPatch(typeof(IslandStreetlight))]
-        private static class IslandStreetlightPatches
+        [HarmonyPatch(typeof(IslandStreetlightsManager))]
+        private static class IslandStreetLightsManagerpatches
         {
-            [HarmonyPatch("Start")]
-            [HarmonyPostfix]
-            public static void StartPatch(IslandStreetlight __instance, ref Light ___light)
+            [HarmonyPatch("LightDistanceCheckLoop")]
+            [HarmonyPrefix]
+            public static bool DistanceCheckLoopPatch(IslandStreetlightsManager __instance, ref List<IslandStreetlight> ___streetlights, ref int ___i)
             {
-                if (__instance.name == "senna_lantern_light")
+                if (___streetlights.Count > 0)
                 {
-                    Debug.Log("hey man! i'm bullshit!");
-                    GameObject lightContainer = UnityEngine.Object.Instantiate(__instance.gameObject, __instance.transform);
-                    lightContainer.transform.localPosition = new Vector3(-0.012f, 0.0036f, 0.1436f);
-                    lightContainer.transform.localRotation = new Quaternion(-0.6227f, -0.7812f, -0.0164f, -0.0406f);
-                    UnityEngine.Object.Destroy(lightContainer.GetComponent<Rigidbody>());
-                    UnityEngine.Object.Destroy(lightContainer.GetComponent<IslandStreetlight>());
-                    UnityEngine.Object.Destroy(lightContainer.GetComponent<MeshRenderer>());
-                    UnityEngine.Object.Destroy(lightContainer.GetComponent<MeshFilter>());
-                    Light newLight = lightContainer.GetComponent<Light>();
+                    if (___i >= ___streetlights.Count)
+                    {
+                        ___i = 0;
+                    }
 
-                    newLight.shadowNearPlane = 0.2f;
-                    //newLight.type = LightType.Spot;
-                    newLight.spotAngle = 180;
+                    if (Vector3.Distance(___streetlights[___i].transform.position, Camera.main.transform.position) > __instance.vertexLightDistance)
+                    {
+                        ___streetlights[___i].GetLight().renderMode = LightRenderMode.ForceVertex;
+                    }
+                    else
+                    {
+                        ___streetlights[___i].GetLight().renderMode = LightRenderMode.ForcePixel;
+                    }
 
-                    UnityEngine.Object.Destroy(__instance.gameObject.GetComponent<Light>());
-                    ___light = newLight;
-
+                    ___i++;
                 }
-
+                return false; 
             }
+
+
         }
 
         [HarmonyPatch(typeof(IslandSceneryScene))]
@@ -72,51 +72,17 @@ namespace Dynamic_Lights
                 if (!__instance.gameObject.GetComponent<IslandStreetlightsManager>() && ___parentIslandIndex > 8 && ___parentIslandIndex != 20)
                 {
                     __instance.gameObject.AddComponent<IslandStreetlightsManager>();
+                    if (___parentIslandIndex == 15)
+                    {
+                        __instance.GetComponent<IslandStreetlightsManager>().vertexLightDistance = 90;
+                    }
                 }
                 if (!__instance.gameObject.GetComponent<LightManager>())
                 {
                     __instance.gameObject.AddComponent<LightManager>();
                 }
+
             }
-        }
-
-
-        [HarmonyPatch(typeof(PortDude), "Awake")]
-        private static class PortDudePatch
-        {
-            [HarmonyPostfix]
-            public static void AddInteriorEffectsTrigger(PortDude __instance, Port ___port)
-            {
-                int portIndex = ___port.portIndex;
-                // exclude outdoor offices
-                if (portIndex != 5 && portIndex != 24)
-                {
-/*                    GameObject interiorTrigger = UnityEngine.Object.Instantiate(new GameObject() { name = "port interior trigger" }, __instance.transform.position, ResourceRefs.triggerRotations[portIndex], __instance.transform);
-                    interiorTrigger.AddComponent<InteriorEffectsTrigger>();
-                    interiorTrigger.transform.position = ResourceRefs.triggerLocs[portIndex];
-                    BoxCollider bcol = interiorTrigger.AddComponent<BoxCollider>();
-                    bcol.size = ResourceRefs.colSizes[portIndex];
-                    bcol.isTrigger = true;*/
-
-                    AddInteriorTrigger(__instance.transform, portIndex);
-
-                    if (portIndex == 0) AddInteriorTrigger(__instance.transform, 30);
-                    if (portIndex == 15) AddInteriorTrigger(__instance.transform, 31);
-                    if (portIndex == 21) AddInteriorTrigger(__instance.transform, 32);
-                    if (portIndex == 25) AddInteriorTrigger(__instance.transform, 33);
-                    if (portIndex == 13) AddInteriorTrigger(__instance.transform, 34);
-                }
-            }
-        }
-
-        public static void AddInteriorTrigger(Transform parent, int index)
-        {
-            GameObject interiorTrigger = UnityEngine.Object.Instantiate(new GameObject() { name = "port interior trigger " + index }, parent.position, ResourceRefs.triggerRotations[index], parent);
-            interiorTrigger.AddComponent<InteriorEffectsTrigger>();
-            interiorTrigger.transform.localPosition = ResourceRefs.triggerLocs[index];
-            BoxCollider bcol = interiorTrigger.AddComponent<BoxCollider>();
-            bcol.size = ResourceRefs.colSizes[index];
-            bcol.isTrigger = true;
         }
     }
 }
