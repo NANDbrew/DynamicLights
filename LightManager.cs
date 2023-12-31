@@ -124,7 +124,7 @@ namespace Dynamic_Lights
             }
 
             // set sen'na specific shadows
-            if (GameState.justStarted || shadowsOn != Plugin.sennaShadows.Value)
+            if (GameState.justStarted || sennaShadows != Plugin.sennaShadows.Value)
             {
                 foreach (Light light in sennaLights)
                 {

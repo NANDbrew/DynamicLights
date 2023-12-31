@@ -21,8 +21,8 @@ namespace Dynamic_Lights
         {
             Harmony.CreateAndPatchAll(Assembly.GetExecutingAssembly(), PLUGIN_ID);
 
-            globalShadows = Config.Bind("Settings", "Shadows", true);
-            sennaShadows = Config.Bind("Settings", "Senna shadows", true);
+            globalShadows = Config.Bind("Settings", "Shadows", true, new ConfigDescription("Dynamic shadows for all stationary lights except Sen'na streetlights"));
+            sennaShadows = Config.Bind("Settings", $"Sen'na shadows", true, new ConfigDescription("Dynamic shadows for Sen'na streetlights"));
         }
     }
 }
