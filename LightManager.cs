@@ -23,6 +23,7 @@ namespace Dynamic_Lights
 
         private List<IslandStreetlightFire> streetlights = new List<IslandStreetlightFire>();
         private int i;
+        private bool lightOn;
 
         private void Start()
         {
@@ -32,7 +33,7 @@ namespace Dynamic_Lights
 
             foreach (Light light in lights)
             {
-                if (light.transform.parent.GetComponent<ShipItemLight>()) continue; // skip if we're a carryable lantern
+                if (light.transform.parent.GetComponent<ShipItemLight>() || light.transform.parent.GetComponent<ShipItemStove>()) continue; // skip if we're a carryable lantern
                 string lightName = light.transform.parent.name;
 
                 if (!light.name.Contains("halo") && light.transform.position.y < 20) // add to shadow list if we're not a halo or up on a hill
@@ -68,12 +69,17 @@ namespace Dynamic_Lights
                 if (lightName.Contains("stove") || lightName.Contains("candle")) dayLights.Add(light.gameObject); // stoves and candles are assumed to be shops.
                 else if (!light.gameObject.GetComponent<IslandStreetlight>() && !light.gameObject.GetComponent<IslandStreetlightFire>()) // FFL stuff already has this component
                 {
-                    if (light.name.Contains("street")) // emerald/aestrin street lamps 
+                    if (light.name.Contains("street") || light.name.Contains("Cube") || light.name.Contains("Particle")) // emerald/aestrin street lamps 
                     {
-                        IslandStreetlight streetlight = light.gameObject.AddComponent<IslandStreetlight>();
+                        //IslandStreetlight streetlight = light.gameObject.AddComponent<IslandStreetlight>();
 
-                        gameObject.GetComponent<IslandStreetlightsManager>().AddStreetlight(streetlight);
-                        streetlight.streetlightManager = gameObject.GetComponent<IslandStreetlightsManager>();
+                        //gameObject.GetComponent<IslandStreetlightsManager>().AddStreetlight(streetlight);
+                        //streetlight.streetlightManager = gameObject.GetComponent<IslandStreetlightsManager>();
+                        //streetlight.halo = light.transform.parent.GetComponentInChildren<LightHalo>();
+
+                        IslandStreetlightFire streetlight = light.gameObject.AddComponent<IslandStreetlightFire>(); // new class handles light with sound/particles
+                        this.AddStreetlight(streetlight);
+                        streetlight.lightManager = this;
                         streetlight.halo = light.transform.parent.GetComponentInChildren<LightHalo>();
 
                         if (streetlight.GetComponent<Renderer>().materials[0].name.Contains("green")) 
@@ -88,15 +94,6 @@ namespace Dynamic_Lights
                         {
                             streetlight.offMat = ResourceRefs.paperOffMatYellow; 
                         }
-                    }
-
-                    else if (light.name.Contains("Cube") || light.name.Contains("Particle")) // al'ankh lanterns & braziers
-                    {
-                        IslandStreetlightFire streetlight = light.gameObject.AddComponent<IslandStreetlightFire>(); // new class handles light with sound/particles
-                        this.AddStreetlight(streetlight);
-                        streetlight.lightManager = this;
-                        streetlight.halo = light.transform.parent.GetComponentInChildren<LightHalo>();
-
                     }
                 }
                 
@@ -143,16 +140,19 @@ namespace Dynamic_Lights
 
             LightDistanceCheckLoop();
 
-            bool lightOn = false;
             if (Sun.sun.localTime > 16f || Sun.sun.localTime < 8f)
             {
                 lightOn = true;
             }
+            else
+            {
+                lightOn = false;
+            }
 
-            foreach (IslandStreetlightFire streetlight in streetlights)
+/*            foreach (IslandStreetlightFire streetlight in streetlights)
             {
                 streetlight.SetLight(lightOn);
-            }
+            }*/
 
             bool dayLightOn = true;
             if (Sun.sun.localTime > 18f || Sun.sun.localTime < 7f)
@@ -193,7 +193,7 @@ namespace Dynamic_Lights
                 {
                     streetlights[i].GetLight().renderMode = LightRenderMode.ForcePixel;
                 }
-
+                streetlights[i].SetLight(lightOn);
                 i++;
             }
         }

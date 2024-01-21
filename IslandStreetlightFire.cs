@@ -11,6 +11,12 @@ namespace Dynamic_Lights
     {
         public LightHalo halo;
         private Light light;
+
+        public Material offMat;
+        private Renderer renderer;
+        private Material onMat;
+
+
         private ParticleSystem particleSystem;
         private AudioSource audioSource;
         public LightManager lightManager;
@@ -25,12 +31,23 @@ namespace Dynamic_Lights
             light = GetComponent<Light>();
             particleSystem = GetComponent<ParticleSystem>();
             audioSource = GetComponent<AudioSource>();
+            renderer = GetComponent<Renderer>();
+            onMat = renderer.sharedMaterials[0];
         }
 
         public void SetLight(bool newState)
         {
             light.enabled = newState;
-            particleSystem.enableEmission = newState;
+            if (renderer != null)
+            {
+                Material[] sharedMaterials = renderer.sharedMaterials;
+                if (newState) sharedMaterials[0] = onMat;
+                else sharedMaterials[0] = offMat;
+                renderer.sharedMaterials = sharedMaterials;
+
+            }
+
+            if (particleSystem) particleSystem.enableEmission = newState;
             if (audioSource) audioSource.mute = !newState;
             halo.ToggleHalo(newState);
         }

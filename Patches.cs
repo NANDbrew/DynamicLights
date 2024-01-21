@@ -69,14 +69,14 @@ namespace Dynamic_Lights
             [HarmonyPostfix]
             public static void Patch(IslandSceneryScene __instance, int ___parentIslandIndex)
             {
-                if (!__instance.gameObject.GetComponent<IslandStreetlightsManager>() && ___parentIslandIndex > 8 && ___parentIslandIndex != 20)
+/*                if (!__instance.gameObject.GetComponent<IslandStreetlightsManager>() && ___parentIslandIndex > 8 && ___parentIslandIndex != 20)
                 {
                     __instance.gameObject.AddComponent<IslandStreetlightsManager>();
                     if (___parentIslandIndex == 15)
                     {
                         __instance.GetComponent<IslandStreetlightsManager>().vertexLightDistance = 90;
                     }
-                }
+                }*/
                 if (!__instance.gameObject.GetComponent<LightManager>())
                 {
                     __instance.gameObject.AddComponent<LightManager>();
