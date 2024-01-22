@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,16 +10,18 @@ namespace Dynamic_Lights
 {
     internal class IslandStreetlightFire : MonoBehaviour
     {
+        public LightType type;
         public LightHalo halo;
         private Light light;
+        public bool senna;
 
         public Material offMat;
         private Renderer renderer;
         private Material onMat;
-
+        public bool ffl;
 
         private ParticleSystem particleSystem;
-        private AudioSource audioSource;
+        public AudioSource audioSource;
         public LightManager lightManager;
 
         public Light GetLight()
@@ -38,7 +41,19 @@ namespace Dynamic_Lights
         public void SetLight(bool newState)
         {
             light.enabled = newState;
-            if (renderer != null)
+
+            if (particleSystem is ParticleSystem component)
+            {
+                if (newState == true)
+                {
+                    component.Play();
+                }
+                else
+                {
+                    component.Stop();
+                }
+            }
+            else
             {
                 Material[] sharedMaterials = renderer.sharedMaterials;
                 if (newState) sharedMaterials[0] = onMat;
@@ -47,9 +62,10 @@ namespace Dynamic_Lights
 
             }
 
-            if (particleSystem) particleSystem.enableEmission = newState;
             if (audioSource) audioSource.mute = !newState;
-            halo.ToggleHalo(newState);
+
+            if (ffl && !Plugin.lightHalo.Value) halo.ToggleHalo(false);
+            else halo.ToggleHalo(newState);
         }
 
         private void Start()

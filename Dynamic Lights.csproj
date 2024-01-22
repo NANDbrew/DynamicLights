@@ -90,8 +90,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="IslandStreetlightFire.cs" />
     <Compile Include="LightManager.cs" />
+    <Compile Include="LightType.cs" />
     <Compile Include="Patches.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="ResourceRefs.cs" />

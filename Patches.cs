@@ -81,6 +81,10 @@ namespace Dynamic_Lights
                 {
                     __instance.gameObject.AddComponent<LightManager>();
                 }
+                if (__instance.gameObject.GetComponent<IslandStreetlightsManager>() is IslandStreetlightsManager component)
+                {
+                    UnityEngine.Object.Destroy(component);
+                }
 
             }
         }
