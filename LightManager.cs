@@ -20,43 +20,50 @@ namespace Dynamic_Lights
         //private List<Light> shadowLights = new List<Light>();
         //private List<Light> sennaLights = new List<Light>();
 
-        public float vertexLightDistance = 44f;
+        //public float vertexLightDistance = 44f;
 
         private List<IslandStreetlightFire> streetlights = new List<IslandStreetlightFire>();
         private int i;
         private bool lightOn;
         private bool dayLightOn;
 
+        private int islandIndex;
+
         private void Start()
         {
-            ResourceRefs.CreateMaterials();
-            Transform portDude = Refs.islands[gameObject.GetComponent<IslandSceneryScene>().parentIslandIndex].GetComponentInChildren<PortDude>().transform;
+            //ResourceRefs.CreateMaterials();
+            islandIndex = GetComponent<IslandSceneryScene>().parentIslandIndex;
+
 
             foreach (Light light in gameObject.GetComponentsInChildren<Light>())
             {
                 if (light.transform.parent.GetComponent<ShipItemLight>() || light.transform.parent.GetComponent<ShipItemStove>()) continue; // skip if we're a carryable lantern or a stove
                 if (light.name.Contains("halo")) continue;
+                if (islandIndex == 30) // rock of despair
+                {
+                    light.shadows = LightShadows.Soft;
+                    light.shadowStrength = 0.75f;
 
-                if (light.transform.parent.name.Contains("stove"))
-                {
-                    light.shadowStrength = 1.0f;
+                    continue;
                 }
-                else
+                if (light.name.Contains("Particle") && !light.transform.parent.name.Contains("stove") && islandIndex == 27) // kicia altar
                 {
-                light.shadowStrength = 0.75f;
+                    light.shadows = LightShadows.Soft;
+                    light.shadowStrength = 0.75f;
+
+                    continue;
                 }
 
-                if (light.name.Contains("senna")) // these are also present at on'na
+                IslandStreetlightFire streetlight = light.gameObject.AddComponent<IslandStreetlightFire>(); // new class handles daytime lights and special cases
+                streetlight.lightManager = this;
+                if (light.gameObject.GetComponent<IslandStreetlight>() is IslandStreetlight component)
                 {
-                    light.shadowNearPlane = 0f;
-                    if (GetComponent<IslandSceneryScene>().parentIslandIndex == 28) // sen'na 
-                    { 
-                        light.shadowResolution = LightShadowResolution.Low;
-                    }
+                    streetlight.offMat = component.offMat;
+                    streetlight.halo = component.halo;
+                    streetlight.particleSystem = component.particles;
+                    streetlight.audioSource = component.audio;
+                    UnityEngine.Object.Destroy(component);
 
-                }
-                else if (light.name.Contains("street") || light.name.Contains("Particle") || light.name.Contains("Cube")) // 'street' is ffl, emerald, aestrin. 'Particle' and 'Cube' are al'ankh
-                {
                     if (light.name.Contains("east"))
                     {
                         light.shadowNearPlane = 0.37f;
@@ -65,29 +72,16 @@ namespace Dynamic_Lights
                     {
                         light.shadowNearPlane = 0.6f;
                     }
+                    streetlight.type = LightType.Night;
                 }
-                else if (light.transform.parent.name.Contains("candle"))
-                {
-                    light.shadowNearPlane = 0.05f;
-                }
-
-                if (light.name.Contains("Particle") && GetComponent<IslandSceneryScene>().parentIslandIndex == 27) // kicia altar
-                {
-                    light.shadows = LightShadows.Soft;
-                    continue;
-                }
-
-                IslandStreetlightFire streetlight = light.gameObject.AddComponent<IslandStreetlightFire>(); // new class handles light with sound/particles
-                streetlight.lightManager = this;
-                streetlight.halo = light.transform.parent.GetComponentInChildren<LightHalo>();
-
-                if (Vector3.Distance(light.transform.position, portDude.position) < 5)
+                else
                 {
                     streetlight.type = LightType.Always;
                 }
-                else if (light.transform.parent.name.Contains("stove"))
+
+                if (light.transform.parent.name.Contains("stove"))
                 {
-                    if (light.transform.parent.name.Contains("shop stove E")) 
+                    if (light.transform.parent.name.Contains("shop stove E"))
                     {
                         var pos = light.transform.localPosition;
                         pos.y = 0.097f;
@@ -95,56 +89,50 @@ namespace Dynamic_Lights
                     }
                     streetlight.type = LightType.Day;
                     streetlight.audioSource = streetlight.transform.parent.GetComponentInChildren<AudioSource>();
+                    light.shadowStrength = 1.0f;
+
                 }
                 else if (light.transform.parent.name.Contains("candle"))
                 {
+                    light.shadowNearPlane = 0.05f;
                     streetlight.type = LightType.Day;
+                    streetlight.interior = true;
+                    light.shadowStrength = 0.75f;
+
                 }
                 else
                 {
-                    streetlight.type = LightType.Night;
+                    light.shadowStrength = 0.75f;
                 }
 
-                if (light.gameObject.GetComponent<IslandStreetlight>() is IslandStreetlight component)
+                if (islandIndex >= 26 && islandIndex <= 29) // FFL
                 {
-                    streetlight.offMat = component.offMat;
-                    streetlight.halo = component.halo;
+                    if (light.name.Contains("senna")) // these are also present at on'na
+                    { 
+                        light.shadowNearPlane = 0f;
+                    }
+                    light.shadowResolution = LightShadowResolution.Low;
                     streetlight.ffl = true;
-                    if (GetComponent<IslandSceneryScene>().parentIslandIndex == 28)
-                    {
-                        streetlight.senna = true;
-                    }
-                    UnityEngine.Object.Destroy(component);
                 }
 
-                if (streetlight.offMat == null)
-                {
-                    if (streetlight.GetComponent<Renderer>().materials[0].name.Contains("green"))
-                    {
-                        streetlight.offMat = ResourceRefs.paperOffMatGreen;
-                    }
-                    else if (streetlight.GetComponent<Renderer>().materials[0].name.Contains("red"))
-                    {
-                        streetlight.offMat = ResourceRefs.paperOffMatRed;
-                    }
-                    else if (streetlight.GetComponent<Renderer>().materials[0].name.Contains("blu"))
-                    {
-                        streetlight.offMat = ResourceRefs.paperOffMatBlue;
-                    }
-                    else if (streetlight.GetComponent<Renderer>().materials[0].name.Contains("yellow"))
-                    {
-                        streetlight.offMat = ResourceRefs.paperOffMatYellow;
-                    }
-                }
-                
+              
             }
         }
 
         private void Update()
         {
-            vertexLightDistance = (float)Plugin.vertexLightDistance.Value;
- 
-            if (Sun.sun.localTime > 16f || Sun.sun.localTime < 8f)
+            if (GameState.justStarted)
+            {
+                foreach (IslandStreetlightFire streetlight in streetlights)
+                {
+                    if (Vector3.Distance(streetlight.transform.position, Refs.islands[islandIndex].GetComponentInChildren<PortDude>().transform.position) < 5)
+                    {
+                        streetlight.type = LightType.Always;
+                    }
+                }
+            }
+
+            if (Sun.sun.localTime > 16.5f || Sun.sun.localTime < 7.5f)
             {
                 lightOn = true;
             }
@@ -183,7 +171,7 @@ namespace Dynamic_Lights
                 {
                     i = 0;
                 }
-                if (Vector3.Distance(streetlights[i].transform.position, Camera.main.transform.position) > vertexLightDistance)
+                if (Vector3.Distance(streetlights[i].transform.position, Camera.main.transform.position) > Plugin.vertexLightDistance.Value)
                 {
                     streetlights[i].GetLight().renderMode = LightRenderMode.ForceVertex;
                 }
@@ -192,7 +180,7 @@ namespace Dynamic_Lights
                     streetlights[i].GetLight().renderMode = LightRenderMode.ForcePixel;
                 }
 
-                if ((Plugin.globalShadows.Value || (Plugin.sennaShadows.Value && streetlights[i].senna)) && Vector3.Distance(streetlights[i].transform.position, Camera.main.transform.position) < Plugin.shadowLightDistance.Value)
+                if ((Plugin.globalShadows.Value || (Plugin.interiorShadows.Value && streetlights[i].interior)) && Vector3.Distance(streetlights[i].transform.position, Camera.main.transform.position) < Plugin.shadowLightDistance.Value)
                 {
                     streetlights[i].GetLight().shadows = LightShadows.Soft;
                 }

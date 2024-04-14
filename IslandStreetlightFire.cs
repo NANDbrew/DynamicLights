@@ -13,14 +13,14 @@ namespace Dynamic_Lights
         public LightType type;
         public LightHalo halo;
         private Light light;
-        public bool senna;
+        public bool interior;
 
         public Material offMat;
         private Renderer renderer;
         private Material onMat;
         public bool ffl;
 
-        private ParticleSystem particleSystem;
+        public ParticleSystem particleSystem;
         public AudioSource audioSource;
         public LightManager lightManager;
 
@@ -32,7 +32,7 @@ namespace Dynamic_Lights
         private void Awake()
         {
             light = GetComponent<Light>();
-            particleSystem = GetComponent<ParticleSystem>();
+            if (!particleSystem) particleSystem = GetComponent<ParticleSystem>();
             audioSource = GetComponent<AudioSource>();
             renderer = GetComponent<Renderer>();
             onMat = renderer.sharedMaterials[0];
@@ -63,9 +63,11 @@ namespace Dynamic_Lights
             }
 
             if (audioSource) audioSource.mute = !newState;
-
-            if (ffl && !Plugin.lightHalo.Value) halo.ToggleHalo(false);
-            else halo.ToggleHalo(newState);
+            if (halo)
+            {
+                if (ffl && !Plugin.lightHalo.Value) halo.ToggleHalo(false);
+                else halo.ToggleHalo(newState);
+            }
         }
 
         private void Start()
@@ -74,7 +76,7 @@ namespace Dynamic_Lights
             {
                 lightManager.AddStreetlight(this);
             }
-            if (!halo) halo = transform.parent.parent.GetComponentInChildren<LightHalo>();
+            //if (!halo) halo = transform.parent.parent.GetComponentInChildren<LightHalo>();
         }
     }
 }
