@@ -10,25 +10,21 @@ namespace Dynamic_Lights
 {
     internal class Patches
     {
-/*        [HarmonyPatch(typeof(ShipItemLight))]
-        private static class ShipItemLightPatches
+/*        [HarmonyPatch(typeof(WanderingStormLightning))]
+        private static class LightningPatches
         {
-            [HarmonyPatch("OnLoad")]
-            public static void Prefix(ref Material ___paperOffMat, Renderer ___paperRenderer)
+            [HarmonyPatch("LightningStrike")]
+            public static void Prefix(Light ___light)
             {
-                if (___paperOffMat)
+                if (Plugin.globalShadows.Value)
                 {
-                    ResourceRefs.paperOffMat = ___paperOffMat;
-
-                    if (___paperRenderer.sharedMaterial.name.Contains("blu"))
-                    {
-                        Material bluePaper = ResourceRefs.paperOffMatBlue;
-                        if (bluePaper == null || bluePaper.name == "lamp blue off") { bluePaper.CopyPropertiesFromMaterial(___paperOffMat); bluePaper.color = new Color(0.3676575f, 0.760615f, 0.9622641f, 1); }
-                        ___paperOffMat = ResourceRefs.paperOffMatBlue;
-                    }
-
+                    ___light.shadows = LightShadows.Hard;
+                    ___light.shadowStrength = Plugin.lightningShadow.Value;
                 }
-
+                else
+                {
+                    ___light.shadows = LightShadows.None;
+                }
             }
         }*/
 
@@ -40,7 +36,8 @@ namespace Dynamic_Lights
             public static void UpdatePatch(IslandStreetlightsManager __instance)
             {
                 __instance.gameObject.AddComponent<LightManager>();
-                UnityEngine.Object.Destroy(__instance);
+                __instance.enabled = false;
+                //UnityEngine.Object.Destroy(__instance);
             }
 
 /*            [HarmonyPatch("Update")]
@@ -79,47 +76,39 @@ namespace Dynamic_Lights
 
         }
 
-/*        [HarmonyPatch(typeof(LightHalo))]
-        private static class HaloPatch
-        {
-            [HarmonyPatch("ToggleHalo")]
-            [HarmonyPrefix]
-            public static bool Patch(ref bool ___haloActive)
-            {
-                if (Plugin.lightHalo.Value)
+        /*        [HarmonyPatch(typeof(LightHalo))]
+                private static class HaloPatch
                 {
-                    return true;
-                }
-                else
-                {
-                    ___haloActive = false;
-                    return false;
-                }
-            }
-        }*/
+                    [HarmonyPatch("ToggleHalo")]
+                    [HarmonyPrefix]
+                    public static bool Patch(ref bool ___haloActive)
+                    {
+                        if (Plugin.lightHalo.Value)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            ___haloActive = false;
+                            return false;
+                        }
+                    }
+                }*/
 
 /*        [HarmonyPatch(typeof(IslandSceneryScene))]
         private static class SomeClassPatch
         {
             [HarmonyPatch("Update")]
             [HarmonyPostfix]
-            public static void Patch(IslandSceneryScene __instance, int ___parentIslandIndex)
+            public static void Patch(IslandSceneryScene __instance)
             {
-*//*                if (!__instance.gameObject.GetComponent<IslandStreetlightsManager>() && ___parentIslandIndex > 8 && ___parentIslandIndex != 20)
-                {
-                    __instance.gameObject.AddComponent<IslandStreetlightsManager>();
-                    if (___parentIslandIndex == 15)
-                    {
-                        __instance.GetComponent<IslandStreetlightsManager>().vertexLightDistance = 90;
-                    }
-                }*//*
-                if (!__instance.gameObject.GetComponent<LightManager>())
-                {
-                    __instance.gameObject.AddComponent<LightManager>();
-                }
                 if (__instance.gameObject.GetComponent<IslandStreetlightsManager>() is IslandStreetlightsManager component)
                 {
-                    UnityEngine.Object.Destroy(component);
+                    component.enabled = !Plugin.globalToggle.Value;
+                }
+                if (__instance.gameObject.GetComponent<LightManager>() is LightManager component2)
+                {
+                    component2.enabled = Plugin.globalToggle.Value;
                 }
 
             }

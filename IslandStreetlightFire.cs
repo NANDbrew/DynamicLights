@@ -42,15 +42,15 @@ namespace Dynamic_Lights
         {
             light.enabled = newState;
 
-            if (particleSystem is ParticleSystem component)
+            if (particleSystem != null)
             {
-                if (newState == true)
+                if (newState && !particleSystem.isPlaying)
                 {
-                    component.Play();
+                    particleSystem.Play();
                 }
-                else
+                else if (!newState)
                 {
-                    component.Stop();
+                    particleSystem.Stop();
                 }
             }
             else
