@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -9,16 +10,30 @@ namespace Dynamic_Lights
 {
     internal static class ResourceRefs
     {
-        public static Material paperOffMat;
+        /*public static Material paperOffMat;
         public static Material paperOffMatYellow;
         public static Material paperOffMatGreen;
         public static Material paperOffMatBlue;
-        public static Material paperOffMatRed;
+        public static Material paperOffMatRed;*/
+
+        public static Texture2D flame;
+
 
         public static void CreateMaterials()
         {
 
-            if (paperOffMat == null) paperOffMat = new Material(Shader.Find("Standard"));
+            string path = Path.Combine(Application.persistentDataPath, "flame.png");
+            //mat = new Material(Shader.Find("Legacy Shaders/Transparent/Diffuse"));
+            byte[] bytes = File.Exists(path) ? File.ReadAllBytes(path) : null;
+            if (bytes != null)
+            {
+                flame = new Texture2D(1, 1);
+                flame.LoadImage(bytes);
+                Debug.Log("MatLoader loaded texture from file");
+            }
+
+
+            /*if (paperOffMat == null) paperOffMat = new Material(Shader.Find("Standard"));
             if (paperOffMat != null) Debug.Log("found material: " + paperOffMat);
             else Debug.Log("failed to load paper");
 
@@ -56,7 +71,7 @@ namespace Dynamic_Lights
                     color = new Color(0.8018868f, 0.3758817f, 0.366901f, 1),
                     name = "lamp red off"
                 };
-            }
+            }*/
         }
     }
 }

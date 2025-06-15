@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -9,10 +10,18 @@ namespace Dynamic_Lights
 {
     internal class IslandStreetlightFire : MonoBehaviour
     {
+        public LightType type;
         public LightHalo halo;
         private Light light;
-        private ParticleSystem particleSystem;
-        private AudioSource audioSource;
+        public bool interior;
+
+        public Material offMat;
+        private Renderer renderer;
+        private Material onMat;
+        public bool ffl;
+
+        public ParticleSystem particleSystem;
+        public AudioSource audioSource;
         public LightManager lightManager;
 
         public Light GetLight()
@@ -23,16 +32,42 @@ namespace Dynamic_Lights
         private void Awake()
         {
             light = GetComponent<Light>();
-            particleSystem = GetComponent<ParticleSystem>();
+            if (!particleSystem) particleSystem = GetComponent<ParticleSystem>();
             audioSource = GetComponent<AudioSource>();
+            renderer = GetComponent<Renderer>();
+            onMat = renderer.sharedMaterials[0];
         }
 
         public void SetLight(bool newState)
         {
             light.enabled = newState;
-            particleSystem.enableEmission = newState;
+
+            if (particleSystem != null)
+            {
+                if (newState && !particleSystem.isPlaying)
+                {
+                    particleSystem.Play();
+                }
+                else if (!newState)
+                {
+                    particleSystem.Stop();
+                }
+            }
+            else
+            {
+                Material[] sharedMaterials = renderer.sharedMaterials;
+                if (newState) sharedMaterials[0] = onMat;
+                else sharedMaterials[0] = offMat;
+                renderer.sharedMaterials = sharedMaterials;
+
+            }
+
             if (audioSource) audioSource.mute = !newState;
-            halo.ToggleHalo(newState);
+            if (halo)
+            {
+                if (ffl && !Plugin.lightHalo.Value) halo.ToggleHalo(false);
+                else halo.ToggleHalo(newState);
+            }
         }
 
         private void Start()
@@ -41,7 +76,7 @@ namespace Dynamic_Lights
             {
                 lightManager.AddStreetlight(this);
             }
-            if (!halo) halo = transform.parent.parent.GetComponentInChildren<LightHalo>();
+            //if (!halo) halo = transform.parent.parent.GetComponentInChildren<LightHalo>();
         }
     }
 }
